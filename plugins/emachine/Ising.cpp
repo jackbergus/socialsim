@@ -1,0 +1,139 @@
+/*
+ * Ising.cpp
+ * This file is part of socialsim
+ *
+ * Copyright (C) 2014 - Giacomo Bergami
+ *
+ * socialsim is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * socialsim is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with socialsim. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "event_machine.h"
+#include <unistd.h>
+
+class Ising : public EventMachine {
+	int vPos;
+	protected:
+	CernOWFile log;
+		
+		void dump() {
+			CernRecord cr{"riga"};
+			//The time variable
+			
+			cr << getSimTime();
+			//The agent's opinion over the topic. In this case we have only one subject
+			int cnt = 0;
+			for (Agent* a : graph.Agents()) {
+				cr << Plan::getOpinionType(a->getState(),0);
+				cnt++;
+			} 
+			
+			for (Vertex* x : graph.Vertices())  {
+				cr << x->ssize();
+			}			
+
+			for (Agent* a : graph.Agents()) {
+				for (Agent* b : graph.Agents()) {
+					cr << Plan::getSenderReputation(a->getState(),b->getId());
+				} 
+			} 
+			
+			//Saves row to file
+			log << cr;
+		}
+		
+		
+		void close() { log.close(); }
+		
+		
+		void init_header() {
+			CernHeader ch;
+			//The time variable
+			ch << "time ";
+			//The agent's opinion over the topic. In this case we have only one subject
+			std::string column;
+			for (Agent* a : graph.Agents()) {
+				column = "O(" + std::to_string(a->getId()) + ") ";
+				ch << column;
+			} 
+			
+			for (Vertex* a : graph.Vertices()) {
+				column = "S(" + std::to_string(a->getId()) + ") ";
+				ch << column;
+			} 
+			
+			for (Agent* a : graph.Agents()) {
+				for (Agent* b : graph.Agents()) {
+					column = "R(" + std::to_string(a->getId()) + "," + std::to_string(b->getId()) + ")";
+					ch << column;
+				} 
+			} 
+			std::cout << "CH SIZE: " << ch.size() << std::endl;
+			log.reopenWrite(log_filename,ch);
+		}
+		
+		void processEvent(std::shared_ptr<Event> e) {
+			bool did_broadcast; 
+			if (e->getType() == EventEnumType::NO_EVENT) {
+				std::cout << "No event for #" << e->getDestin()->getId() << std::endl;
+				did_broadcast = e->getDestin()->getAgent()->reason();
+			} else if (e->getType() == EventEnumType::MESSAGE_SENT) {
+				std::cout << "Message Sent from #" << e->getDestin()->getId() << std::endl;
+				did_broadcast = e->getDestin()->getAgent()->percept();
+			} 
+			if (did_broadcast) {	
+				std::list<Vertex*> vl;
+				for (auto v: graph.getAdjacency(e->getDestin())) {
+					std::cout << "Message Sent from #" << e->getDestin()->getId() << " to #" << graph.vcast(v)->getId() << std::endl;
+					vl.push_back(graph.vcast(v));
+				}
+				addEvent(EventEnumType::MESSAGE_SENT,e->getDestin(),vl);
+			} else
+				std::cout << "Sending no message" << std::endl;
+		}
+
+	public: Ising(json::Object conf, int seed, int vertexpos) 
+		: EventMachine(conf,seed,vertexpos),
+		   vPos{vertexpos} {
+			//Init
+			for (Vertex* vx: graph.Vertices()) {
+				if (vx->getId()==vertexpos) {
+					//Phony self-message for a start
+					addEvent(EventEnumType::NO_EVENT,vx,vx);
+					break;
+				}
+			}
+			for (Agent* a : graph.Agents()) {
+				json::Object *obj = a->getState();
+				//TODO: per la distribuzione... visita BFS??
+				
+				//Initializing the reputation values
+				for (int i=0; i<graph.nVertices(); i++) {
+					(*obj)[std::to_string(i)] = (int)0;
+				}
+			}
+		
+		}
+		
+		Ising(json::Object c) : Ising(c["conf"], c["seed"], c["vertexpos"]) {};
+};
+
+class ICreator : public EMCreator {
+	public:
+		ICreator() {};
+		Ising* creator(json::Object o) {	//Accesso ad un oggetto json come parametro
+			return new Ising(o);	//Inizializzazione dell'oggetto
+		}
+};
+
+MAKE_PLUGIN(ICreator,EMCreator);

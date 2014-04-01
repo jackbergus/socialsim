@@ -1,0 +1,11 @@
+{
+	"aid":1,
+	"state":{
+		"opinion":{
+			"0":1.0 
+		},
+		"plagiability":0.0
+		
+	},
+	"mentalplan":"planlist.json"
+}

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="key0" for="edge" attr.name="edge_id" attr.type="int" />
+  <key id="key2" for="node" attr.name="vertex_cmdb_id" attr.type="int" />
+  <key id="key3" for="node" attr.name="vertex_name" attr.type="string" />
+  <graph id="G" edgedefault="directed" parse.nodeids="free" parse.edgeids="canonical" parse.order="nodesfirst">
+    <node id="n0">
+      <data key="key2">0</data>
+      <data key="key3">test.json</data> <!-- File of the agent -->
+    </node>
+    <node id="n1">
+      <data key="key2">1</data>
+      <data key="key3">test.json</data> <!-- File of the agent -->
+    </node>
+    <edge id="e0" source="n0" target="n1">
+      <data key="key0">0</data>
+    </edge>
+  </graph>
+</graphml>
+

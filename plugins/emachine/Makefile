@@ -1,0 +1,39 @@
+## Compiler flags
+arch = amd64
+
+ROOTBIN = /usr/share/root/bin
+JAVA_HOME=$(shell readlink -f /usr/bin/javac | sed "s:bin/javac::")
+INCLUDES = -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux -I`root-config --incdir` 
+LIBS = -ljvm -L$(JAVA_HOME)/jre/lib/$(arch) -L$(JAVA_HOME)/jre/lib/$(arch) -L$(JAVA_HOME)/jre/lib/$(arch)/client/ -L$(JAVA_HOME)/jre/lib/$(arch)/server/ `root-config --libs` -Wl,-R`root-config --libdir` 
+
+CPP_FILES := $(wildcard *.cpp)
+OBJ_FILES := $(CPP_FILES:.cpp=.plugin)
+CC_FLAGS := -g -std=c++11 -shared -fPIC -Wl,--export-dynamic -I../../src -I../../ext-libs 
+CC_JSONO := ../../ext-libs/json/json.cpp
+CC_DEBUG := -g -DDEBUG
+
+%.plugin:	%.cpp
+	g++ $(CC_FLAGS) $(INCLUDES) $(LIBS) -o $@ $< $(CC_JSONO) #../../src/plugin-loader/PathHandler.cpp ../../src/event/EventHandler.cpp ../../src/plugin-loader/DistrLoader.cpp
+
+all:	$(OBJ_FILES)
+
+out:	
+	g++ -std=c++11 $(CC_DEBUG) -c ../../ext-libs/json/json.cpp 		 -o json.o
+	g++ -std=c++11 $(CC_DEBUG) -c ../../src/plugin-loader/PathHandler.cpp	 -o phan.o -I../../src/
+	g++ -std=c++11 $(CC_DEBUG) -c ../../src/agent/Message.cpp	 	 -o mesg.o -I../../ext-libs -I../../src/
+	g++ -std=c++11 $(CC_DEBUG) -c ../../src/agent/WholeMentalPlan.cpp	 -o wmpl.o -I../../ext-libs -I../../src/
+	g++ -std=c++11 $(CC_DEBUG) -c ../../src/plugin-loader/PlanLoader.cpp	 -o ploa.o -I../../ext-libs -I../../src/
+	g++ -std=c++11 $(CC_DEBUG) -c ../../src/agent/Agent.cpp	 		 -o agen.o -I../../ext-libs -I../../src/
+	
+	g++ -std=c++11 $(CC_DEBUG) -c ../../src/event/Event.cpp	 		 -o even.o -I../../ext-libs -I../../src/
+	
+	#g++ -std=c++11 $(CC_DEBUG) -c test_machine.cxx				 -I../../ext-libs -I../../src
+	#g++ -std=c++11 $(CC_DEBUG) -ldl 	-o out json.o phan.o ploa.o mesg.o wmpl.o agen.o test_machine.o
+
+debug:	out	
+
+clean:
+	rm -f *.o
+	rm -f *.plugin
+	rm -f out
+

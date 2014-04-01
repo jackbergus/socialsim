@@ -1,0 +1,67 @@
+/*
+ * example2.backup
+ * This file is part of socialsim
+ *
+ * Copyright (C) 2014 - Giacomo Bergami
+ *
+ * socialsim is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * socialsim is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with socialsim. If not, see <http://www.gnu.org/licenses/>.
+ */
+#include "graph/Edge.h"
+#include "graph/Vertex.h"
+#include "graph/Graph.h"
+
+int main() {
+
+/*	TODO: Create Graph
+*/
+	Graph h;
+	Vertex v = h.addVertex("ciao mondo");
+	Vertex u = h.addVertex("mondo vario");
+	v.setName("toccata");
+	auto vd = v.get_gboost_vertex();
+	auto g = h.get_gboost_graph();
+	std::cout << g[vd].name <<std::endl;
+	std::cout << v.getName() <<std::endl;
+	//v.remove();
+	//std::cout << v.getName() <<std::endl;
+	
+	Edge e1 = h.addEdge(v,u/*,"link"*/);
+	//e1.setName("fifi");
+	h.std_out_write();
+	e1.remove();
+	//std::cout << e1.getName() << std::endl;
+	//h.write();
+
+
+
+	
+/*	XXX: Read
+	
+	std::string filename = "example.graphml";
+	boost::dynamic_properties dp;
+	graph_t g;
+	dp.property("vertex_name",get(&VProp::name,g));
+	dp.property("vertex_cmdb_id",get(&VProp::id,g));
+	dp.property("edge_name",get(&EProp::name,g));
+	dp.property("edge_id",get(&EProp::id,g));
+	std::ifstream fin{filename.c_str()};
+	read_graphml(fin, g, dp);
+
+*/
+
+	//Generate Random File	
+	//Graph rand{20,3.7,500};
+	//rand.std_out_write();
+	
+}

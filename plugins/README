@@ -1,0 +1,7 @@
+NOTA BENE:
+
+	Prima di eseguire un test di un plugin, accertarsi che tutti i plugin
+	siano stati compilati, per dipendenze dei .plugin generati a compile-time
+	
+Per compilare solo i plugin senza i test, "make".
+Per compilare tutti i test, fare qui "make debug".

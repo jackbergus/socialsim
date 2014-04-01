@@ -1,0 +1,10 @@
+{
+	"MESSAGE_SENT":{
+		"name":"Exp.plugin",
+		"lambda":10
+	},
+	"NO_EVENT":{
+		"name":"Exp.plugin",
+		"lambda":1
+	}
+}
