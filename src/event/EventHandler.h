@@ -43,5 +43,6 @@ class EventHandler {
 		EventHandler(std::string file, int seed);
 		
 		std::shared_ptr<Event> next(EventEnumType t,Vertex* src, Vertex* dst);
+		double start(double var);
 
 };

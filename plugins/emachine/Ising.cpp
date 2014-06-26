@@ -19,110 +19,340 @@
  */
 
 #include "event_machine.h"
-#include <unistd.h>
+extern "C" {
+	#include <unistd.h>
+	#include <stdlib.h> 
+}
+
+#include <boost/random.hpp>
+#include <boost/random/normal_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/variate_generator.hpp>
+#include <boost/random/uniform_real_distribution.hpp>
+#include <boost/math/distributions/normal.hpp>
+#include <boost/random/uniform_int.hpp>
+#include <sstream>
+
+double s2d (std::string string_h) {
+  double d;
+  std::istringstream totalSString( string_h );
+  totalSString >> d;
+  std::cout << "EE" << std::endl;
+  return d;
+}
 
 class Ising : public EventMachine {
 	int vPos;
 	protected:
-	CernOWFile log;
+	//XXX: CernOWFile log;
+	std::string OPINION{"opinion"};
+	std::string ARGUM{"0"};
+	std::ofstream log2;
+	//std::ofstream log3;
+	boost::mt19937 mersenne;
+	boost::mt19937 mersenne1;
+	boost::uniform_real<> dist{0,1};
+	std::list<int> noaddNodes;
+	boost::variate_generator<boost::mt19937&, boost::uniform_real<> > dice;
+	boost::variate_generator<boost::mt19937&, boost::uniform_real<> > dice1;
+	bool same_event;
+	int current_node = 02;
+	boost::mt19937 mersenne2;
+	boost::normal_distribution<> nd;
+	boost::variate_generator<boost::mt19937&, boost::normal_distribution<> > ndist;
 		
 		void dump() {
-			CernRecord cr{"riga"};
+			//CernRecord cr{"riga"};
 			//The time variable
+			log2 << getSimTime() ;
+			//log3 << getSimTime();
 			
-			cr << getSimTime();
 			//The agent's opinion over the topic. In this case we have only one subject
-			int cnt = 0;
 			for (Agent* a : graph.Agents()) {
-				cr << Plan::getOpinionType(a->getState(),0);
-				cnt++;
+				log2 << " " << Plan::getOpinionType(a->getState(),0);
 			} 
 			
-			for (Vertex* x : graph.Vertices())  {
-				cr << x->ssize();
-			}			
-
-			for (Agent* a : graph.Agents()) {
+			/*for (Agent* a : graph.Agents()) {
 				for (Agent* b : graph.Agents()) {
-					cr << Plan::getSenderReputation(a->getState(),b->getId());
+					log3 << " " << Plan::getSenderReputation(a->getState(),b->getId());
 				} 
-			} 
+			} */
 			
+			log2 << " " << current_node;
+			log2 << std::endl;
+			//log3 << std::endl;
 			//Saves row to file
-			log << cr;
+			
 		}
 		
 		
-		void close() { log.close(); }
+		void close() { 
+			std::cout << "CLOSING FILE" << std::endl;
+			log2.close(); 
+			//log3.close();
+		}
 		
 		
 		void init_header() {
-			CernHeader ch;
+			//CernHeader ch;
 			//The time variable
-			ch << "time ";
+			//ch << "time ";
 			//The agent's opinion over the topic. In this case we have only one subject
 			std::string column;
+			log2 << "time";
+			//log3 << "time";
 			for (Agent* a : graph.Agents()) {
-				column = "O(" + std::to_string(a->getId()) + ") ";
-				ch << column;
+				column = " O(" + std::to_string(a->getId()) + ")";
+				log2 << column;
 			} 
-			
-			for (Vertex* a : graph.Vertices()) {
-				column = "S(" + std::to_string(a->getId()) + ") ";
-				ch << column;
-			} 
-			
+
 			for (Agent* a : graph.Agents()) {
 				for (Agent* b : graph.Agents()) {
-					column = "R(" + std::to_string(a->getId()) + "," + std::to_string(b->getId()) + ")";
-					ch << column;
+					column = " R(" + std::to_string(a->getId()) + "," + std::to_string(b->getId()) + ")";
+					//log3 << column;
 				} 
 			} 
-			std::cout << "CH SIZE: " << ch.size() << std::endl;
-			log.reopenWrite(log_filename,ch);
+			//std::cout << "CH SIZE: " << ch.size() << std::endl;
+			//log2.reopenWrite(log_filename,ch);
+			log2 << " Uid";
+			log2 << std::endl;
+			//log3 << std::endl;
+			
 		}
 		
-		void processEvent(std::shared_ptr<Event> e) {
+		int processEvent(std::shared_ptr<Event> e) {
 			bool did_broadcast; 
 			if (e->getType() == EventEnumType::NO_EVENT) {
 				std::cout << "No event for #" << e->getDestin()->getId() << std::endl;
-				did_broadcast = e->getDestin()->getAgent()->reason();
+				did_broadcast = e->getDestin()->getAgent()->reason(ndist());
 			} else if (e->getType() == EventEnumType::MESSAGE_SENT) {
 				std::cout << "Message Sent from #" << e->getDestin()->getId() << std::endl;
-				did_broadcast = e->getDestin()->getAgent()->percept();
+				did_broadcast = e->getDestin()->getAgent()->percept(ndist());
 			} 
 			if (did_broadcast) {	
 				std::list<Vertex*> vl;
-				for (auto v: graph.getAdjacency(e->getDestin())) {
-					std::cout << "Message Sent from #" << e->getDestin()->getId() << " to #" << graph.vcast(v)->getId() << std::endl;
-					vl.push_back(graph.vcast(v));
+				current_node = e->getDestin()->getId();
+				
+				for (Vertex* v: e->getDestin()->getAdjacency()) {
+					std::cout << "Message Sent from #" << e->getDestin()->getId() << " to #" << v->getId() << std::endl;
+					vl.push_back(v);
 				}
-				addEvent(EventEnumType::MESSAGE_SENT,e->getDestin(),vl);
+				
+				if (same_event)
+					addEventIncr(EventEnumType::MESSAGE_SENT,e->getDestin(),vl);
+				else 
+					addEventIncrDiff(EventEnumType::MESSAGE_SENT,e->getDestin(),vl);
 			} else
 				std::cout << "Sending no message" << std::endl;
+			return 1;
 		}
 
 	public: Ising(json::Object conf, int seed, int vertexpos) 
-		: EventMachine(conf,seed,vertexpos),
-		   vPos{vertexpos} {
-			//Init
+		: EventMachine(conf,seed,vertexpos,true,true,100),
+		   vPos{vertexpos},
+		   log2{"OpinionOpinionSeed"+std::to_string(((int)conf["opinionSeed"]))+log_filename},
+		   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		   //first generator ~ opinion
+		   mersenne{(unsigned int)((int)conf["opinionSeed"])},
+		   dice{mersenne, dist},
+		   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		   //second generator ~ other
+		   mersenne1{0},
+		   dice1{mersenne1,dist},
+		   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		   //normal distribution generator 
+		   // a. getting generator (+10 jump)
+		   mersenne2{0},
+		   // b. getting normal distribution with sigma as parameter
+		   nd{0.0,s2d((std::string)conf["SIGMA"])},
+		   // c. obtaining the desired distribution
+		   ndist{mersenne2,nd} 
+		   
+		   {
+			
+			if (conf.find("opinionSeed")==conf.end()) {
+				std::cerr << "No 'opinionSeed' found" << std::endl;
+				exit(1);
+			}
+			
+			if (conf.find("sameEvent")==conf.end()) {
+				std::cerr << "No 'opinionSeed' found" << std::endl;
+				exit(1);
+			} else 
+				same_event = (((int)conf["sameEvent"]) == 1 ? true : false);
+			std::cout << "sameEvent: " << same_event << std::endl;
+			
+			//Using the sigma for the agent error factor
+			
+			if (conf.find("SIGMA")==conf.end()) {
+				std::cerr << "No sigma found" << std::endl;
+				exit(1);
+			} /*else 
+				//The standard function doesn't seem to work
+				SIGMA_VAL = s2d((std::string)conf["SIGMA"]);
+			std::cout << "SIGMA: " << (double)SIGMA_VAL << std::endl;*/
+			
+			std::string setting;
+			if (conf.find("setting")==conf.end()) {
+				std::cerr << "No setting found" << std::endl;
+				exit(1);
+			} else 
+				setting = (std::string)conf["setting"];
+			std::cout << "SETTING: " << setting << std::endl;
+			
+			//Starting simulation
 			for (Vertex* vx: graph.Vertices()) {
 				if (vx->getId()==vertexpos) {
 					//Phony self-message for a start
-					addEvent(EventEnumType::NO_EVENT,vx,vx);
+					addEventIncr(EventEnumType::NO_EVENT,vx,vx);
 					break;
 				}
 			}
-			for (Agent* a : graph.Agents()) {
-				json::Object *obj = a->getState();
-				//TODO: per la distribuzione... visita BFS??
+			
+			//2000...
+			if (setting.compare("1")==0) {
+				for (Agent* a : graph.Agents()) {
+					json::Object *obj = a->getState();
 				
-				//Initializing the reputation values
-				for (int i=0; i<graph.nVertices(); i++) {
-					(*obj)[std::to_string(i)] = (int)0;
+					//Initializing the reputation values
+					for (int i=0; i<graph.nVertices(); i++) {
+						(*obj)[std::to_string(i)] = (int)1;
+					}
+				
+					(*obj)["plagiability"] = 1;
+				
+					//Different opinions
+					(*obj)[OPINION][ARGUM] = (int)(a->getId() == vertexpos ? 1 : 0);
+				
 				}
+			} else if (setting.compare("2")==0) {
+				for (Agent* a : graph.Agents()) {
+					json::Object *obj = a->getState();
+				
+					//Initializing the reputation values
+					for (int i=0; i<graph.nVertices(); i++) {
+						(*obj)[std::to_string(i)] = (double)0.5;
+					}
+				
+					(*obj)["plagiability"] = 1;
+				
+					//Different opinions
+					(*obj)[OPINION][ARGUM] = (int)(a->getId() == vertexpos ? 1 : 0);
+				
+				}
+			} else if (setting.compare("3")==0) {
+				for (Agent* a : graph.Agents()) {
+					json::Object *obj = a->getState();
+				
+					//Initializing the reputation values
+					for (int i=0; i<graph.nVertices(); i++) {
+						(*obj)[std::to_string(i)] = (double)1;
+					}
+				
+					(*obj)["plagiability"] = 1;
+				
+					//Different opinions
+					(*obj)[OPINION][ARGUM] = (double)(a->getId() == vertexpos ? 1 : 0.5);
+				
+				}
+			//5000...
+			} else if (setting.compare("4")==0) {
+				for (Agent* a : graph.Agents()) {
+					json::Object *obj = a->getState();
+				
+					//Initializing the reputation values
+					for (int i=0; i<graph.nVertices(); i++) {
+						(*obj)[std::to_string(i)] = 1;
+					}
+				
+					(*obj)["plagiability"] = 1;
+				
+					//Different opinions
+					(*obj)[OPINION][ARGUM] = (double)dice();
+				
+				}
+			} else if (setting.compare("5")==0) {
+				for (Agent* a : graph.Agents()) {
+					json::Object *obj = a->getState();
+				
+					//Initializing the reputation values
+					for (int i=0; i<graph.nVertices(); i++) {
+						(*obj)[std::to_string(i)] = 1;
+					}
+				
+					//Different opinions
+					(*obj)[OPINION][ARGUM] = (double)dice1();
+				
+				}
+				
+				for (Agent* a : graph.Agents()) {
+					json::Object *obj = a->getState();
+					(*obj)["plagiability"] = (double)dice();
+				}
+			} else if (setting.compare("6")==0) {
+				for (Agent* a : graph.Agents()) {
+					json::Object *obj = a->getState();
+				
+					//Initializing the reputation values
+					for (int i=0; i<graph.nVertices(); i++) {
+						(*obj)[std::to_string(i)] = (double)dice();
+					}
+				}
+				
+				for (Agent* a : graph.Agents()) {
+					json::Object *obj = a->getState();
+					//Different opinions
+					(*obj)[OPINION][ARGUM] = (double)dice1();
+				}
+				
+				for (Agent* a : graph.Agents()) {
+					json::Object *obj = a->getState();
+					(*obj)["plagiability"] = (double)dice1();
+				}
+
+			} else if (setting.compare("7")==0) {
+				for (Agent* a : graph.Agents()) {
+					json::Object *obj = a->getState();
+				
+					//Initializing the reputation values
+					for (int i=0; i<graph.nVertices(); i++) {
+						(*obj)[std::to_string(i)] = (int)1;
+					}
+				
+					(*obj)["plagiability"] = (double)dice();
+				
+					//Different opinions
+					(*obj)[OPINION][ARGUM] = (int)(a->getId() == vertexpos ? 1 : 0);
+				
+				}
+				
+			} else if (setting.compare("8")==0) {
+				for (Agent* a : graph.Agents()) {
+					json::Object *obj = a->getState();
+				
+					//Initializing the reputation values
+					for (int i=0; i<graph.nVertices(); i++) {
+						(*obj)[std::to_string(i)] = (double)dice();
+					}
+				
+					//Different opinions
+					(*obj)[OPINION][ARGUM] = (double)dice1();
+				
+				}
+				
+				for (Agent* a : graph.Agents()) {
+					json::Object *obj = a->getState();
+					(*obj)["plagiability"] = 1;
+				}
+				
+			} else {
+				std::cerr << "No 'setting' found" << std::endl;
+				exit(1);
 			}
-		
+
+			
+			
+			
 		}
 		
 		Ising(json::Object c) : Ising(c["conf"], c["seed"], c["vertexpos"]) {};

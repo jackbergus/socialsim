@@ -19,8 +19,13 @@
  */
 
 #pragma once
+#include <boost/graph/iteration_macros.hpp>
+#include <boost/graph/random.hpp> 
+#include <boost/random/mersenne_twister.hpp>
 #include "graph/graph_t.h"
+#include "generics.h"
 class Message;
+class AdjacentIterable;
 
 /**
  * Vertex:
@@ -29,20 +34,26 @@ class Message;
  */
 class Vertex {
 	private:
-		VProp* vp;
 		vertex_descriptor vd;
 		Graph* g;
-		std::stack<Message> incoming; 		/**< The list of the incoming messages */
+		data_structure<Message> incoming; 		/**< The list of the incoming messages */
 	public:
-		Vertex(VProp* prop, vertex_descriptor desc,Graph* grap);
+		Vertex(vertex_descriptor desc,Graph* grap);
+		Vertex(vertex_descriptor desc,Graph* grap, bool isstack);
+		Vertex(vertex_descriptor desc,Graph* grap, bool isstack,int lim);
 		
 		void setName(std::string new_name);
 		std::string getName();
 		
 		int getId();
 		std::shared_ptr<Agent> getAgent();
-		
+
 		vertex_descriptor get_gboost_vertex();
+		
+		AdjacentIterable getAdjacency();
+		int getDegree();
+		Vertex* rndAdjacent(boost::variate_generator<boost::mt19937&, boost::uniform_real<> >& mersenne);
+		
 		void remove();
 		Graph* getGraph();
 		void send(Message msg);

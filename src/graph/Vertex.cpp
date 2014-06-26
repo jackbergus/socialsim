@@ -18,17 +18,24 @@
  * along with socialsim. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "agent/Actions.h"
 #include "graph/Vertex.h"
 #include "graph/Graph.h"
 #include "agent/Agent.h"
 #include "agent/Message.h"
 
+//uses the data structure as a stack
+Vertex::Vertex(vertex_descriptor desc,Graph* grap) : incoming{true} {
+	vd = desc;
+	g = grap;
+}
 
-Vertex::Vertex(VProp* prop, vertex_descriptor desc,Graph* grap) {
-	vp = prop;
-	vp->self = this;
+Vertex::Vertex(vertex_descriptor desc,Graph* grap, bool isstack) : incoming{isstack} {
+	vd = desc;
+	g = grap;
+}
+
+Vertex::Vertex(vertex_descriptor desc,Graph* grap, bool isstack, int lim) : incoming{isstack,lim} {
 	vd = desc;
 	g = grap;
 }
@@ -38,38 +45,60 @@ vertex_descriptor Vertex::get_gboost_vertex() {
 }
 
 void Vertex::setName(std::string new_name) {
-	if ((!vp)||(!g)) return;
+	if ((!g)) return;
 	
 	g->setName(new_name,this);
 }
 
 int Vertex::getId() {
-	if ((!vp)||(!g)) return -1;
+	if ((!g)) return -1;
 	
 	graph_t gr = g->get_gboost_graph();
 	return (gr)[(vd)].id;
 }
 
 std::shared_ptr<Agent> Vertex::getAgent() {
-	if ((!vp)||(!g)) { std::shared_ptr<Agent> n{nullptr}; return n; }
+	if ((!g)) { std::shared_ptr<Agent> n{nullptr}; return n; }
 	
 	graph_t gr = g->get_gboost_graph();
 	return (gr)[(vd)].agent_ptr;
 }
 
 std::string Vertex::getName() {
-	if ((!vp)||(!g)) { std::string e{}; return e; }
+	if ((!g)) { std::string e{}; return e; }
 	
 	graph_t gr = g->get_gboost_graph();
 	return (gr)[(vd)].name;
 }
 
+AdjacentIterable Vertex::getAdjacency() {
+	return g->getAdjacency(this);
+}
+
+int Vertex::getDegree() {
+	int i = 0;
+	for (auto x:getAdjacency()) {
+		i++;
+	}
+	return i;
+}
+
+Vertex* Vertex::rndAdjacent(boost::variate_generator<boost::mt19937&, boost::uniform_real<> >& dice) {
+	std::vector<Vertex*> lAdj;
+	for (Vertex *v: getAdjacency())
+		lAdj.push_back(v);
+	int pos = ceil(dice()*(lAdj.size()))-1;
+#ifdef DEBUG
+	std::cout << "POS RAND: " << pos << " of " << lAdj.size() << std::endl;
+#endif
+	return lAdj[pos];
+}
+
 void Vertex::remove() {
-	if ((!vp)||(!g)) {
+	if ((!g)) {
 		return;
 	}
 	Graph* tmp = g;
-	vp = nullptr;
 	g = nullptr;
 	tmp->remove(this);
 }
@@ -79,22 +108,21 @@ Graph* Vertex::getGraph() {
 }
 
 void Vertex::send(Message msg) {
-	incoming.push(msg);///????
+	incoming.put(msg);///????
 }
 
 Message Vertex::recv() {
-	if (incoming.empty()) {
+	if (incoming.isEmpty()) {
 		Message e{};
 		return e;
 	}
-	Message cp = incoming.top();
+	Message cp = incoming.get();
 #ifdef DEBUG
 	std::cout << "Extracted message type: " << cp.getType() << std::endl;
 #endif
-	incoming.pop();
 	return cp;
 }
 
 int Vertex::ssize() {
-	return incoming.size();
+	return incoming.getSize();
 }

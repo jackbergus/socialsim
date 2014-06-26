@@ -27,22 +27,23 @@ void WholeMentalPlan::init_plans(json::Object o) {
 	for (auto it = o.begin() ; it != o.end(); ++it) {
 		if (it->second.GetType() == json::ValueType::IntVal) {
 			int val = it->second;
+#ifdef DEBUG
 			std::cerr << "Loading " << pa->getPlan(it->first) << std::endl;
-			std::shared_ptr<Plan> pl = PlanLoader::getInstance()->load(it->first);
-			plan_map[val] = pl;
+#endif 
+			
+			plan_map[val] = std::unique_ptr<Plan>(PlanLoader::getInstance()->raw_load(it->first));
 		}
 	}
 }
 	
-std::shared_ptr<Plan> WholeMentalPlan::set_first_plan() {
+Plan* WholeMentalPlan::set_first_plan() {
 	current_ptr = plan_map.begin();
 	if (current_ptr == plan_map.end()) {
 		current_pos = -1;
-		std::shared_ptr<Plan> p{nullptr};
-		current_plan = p;
+		current_plan = nullptr;
 	} else {
 		current_pos  = current_ptr->first;
-		current_plan = current_ptr->second;
+		current_plan = current_ptr->second.get();
 	}
 	return current_plan;
 }
@@ -57,7 +58,7 @@ int WholeMentalPlan::forward_to(int pos) {
 		for ( ; current_ptr != plan_map.end(); ++current_ptr) 
 			if (current_ptr->first >= pos) {
 				current_pos = current_ptr->first;
-				current_plan = current_ptr->second;
+				current_plan = current_ptr->second.get();
 				return current_pos;
 			}
 		return INT_MAX;
@@ -74,7 +75,7 @@ int WholeMentalPlan::backward_to(int pos) {
 		for ( ; current_ptr != plan_map.begin(); --current_ptr) 
 			if (current_ptr->first <= pos) {
 				current_pos = current_ptr->first;
-				current_plan = current_ptr->second;
+				current_plan = current_ptr->second.get();
 				return current_pos;
 			}
 		return 0;
@@ -82,11 +83,22 @@ int WholeMentalPlan::backward_to(int pos) {
 }
 
 	
-int WholeMentalPlan::reason(json::Object* state, Message msg) {
+int WholeMentalPlan::reason(json::Object* state, Message msg,double time) {
+	
+	//Optimization: if no plan is there, I return immediately (I don't reason)
+	if (plan_map.size()==0) return INT_MAX;
+	
 	set_first_plan();
 
-	while (current_plan.get() != nullptr) {
-		int next = current_plan->process(state,msg);
+	while (current_plan != nullptr) {
+		int next = current_plan->process(state,msg,time);
+		//int next = 500;
+		
+		//Optimization: if the plan has only one plan...
+		if (plan_map.size()==1) {
+			//...If the next pace is greater than the current pos, then it has to return
+			if (next>current_pos) return INT_MAX;
+		}
 		if (next > current_pos) {
 			next = forward_to(next);
 			if (next == INT_MAX)

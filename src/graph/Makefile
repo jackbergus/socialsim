@@ -13,7 +13,7 @@ GIWS_OUT_FILES = $(addprefix $(PACKAGE_NAME),.cpp .hxx)
 ## TODO: 
 CC_FLAGS := -std=c++11 -I../../src -I../../ext-libs 
 CC_JSONO := ../../ext-libs/json/json.cpp
-CC_DEBUG := -DDEBUG $(CC_FLAGS) -g  -fPIC
+CC_DEBUG := $(CC_FLAGS) -g  -fPIC -flto
 GPP := g++ -std=c++11
 OBJ := ../../ext-libs/boost/graphml.o
 GRAPH := ../../src/graph/
@@ -23,9 +23,11 @@ DST=$(SRC:.cpp=.o)
 
 #compilazione dei file dia in pdf
 %.o:		%.cpp
-		$(GPP) -fPIC $(CC_DEBUG) $(INCLUDES) $(LIBS) -c $< -o $@
+		@echo "    CC $<"
+		@$(GPP) -fPIC -flto $(CC_DEBUG) $(INCLUDES) $(LIBS) -c $< -o $@
+		
 
-all:		$(GIWS_OUT_FILES) $(DST) java
+all:		java $(DST) 
 	
 
 test: $(GIWS_OUT_FILES)
@@ -44,16 +46,16 @@ java: $(GIWS_OUT_FILES)
 	cp ../../ext-libs/graphstream/*.jar ../$(PACKAGE_NAME)
 	
 
-$(GIWS_OUT_FILES): $(GIWS_DESC_FILE)
+$(GIWS_OUT_FILES): $(PACKAGE_NAME)/$(GIWS_DESC_FILE).class
 	python ../../ext-libs/javaparser/giws/giws -f GraphView.giws.xml -p
 	javac -cp ../../ext-libs/graphstream/gs-algo-1.0.jar:../../ext-libs/graphstream/gs-core-1.2.jar:../../ext-libs/graphstream/gs-ui-1.2.jar  graphview/*.java
 	
 
-$(GIWS_DESC_FILE):
+$(PACKAGE_NAME)/$(GIWS_DESC_FILE).class:
 	java -jar ../../ext-libs/javaparser/JavaToXML.jar graphview/GraphView.java
 
 clean:
-	rm -rf $(GIWS_OUT_FILES) $(GIWS_DESC_FILE) test graphview/*.class ../graphview/ *.o *~
+	rm -rf $(GIWS_DESC_FILE) test graphview/*.class ../graphview/  *.o *~
 
 	
 

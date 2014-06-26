@@ -32,8 +32,12 @@
 #include "event/EventGenerator.h"
 
 std::shared_ptr<Event> EventGenerator::next(Vertex* src, Vertex* dst) {
-	double time = d->next();
+	double time = d->next(src,dst);
 	std::shared_ptr<Event> toret{new Event(et,time,src,dst)};
 	return toret;
+}
+
+double EventGenerator::start(double param) {
+	return d->start(param);
 }
 

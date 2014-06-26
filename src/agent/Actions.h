@@ -41,7 +41,7 @@ class Actions {
 		 * @param type the subject of the message
 		 * @param reliability the reliability on topic @a type of the sender
 		 */
-		void act(int type, double reliability);
+		int act(int type, double reliability,double time,Agent* source);
 		
 		/**
 		 * Sends the message to all his neighbourhood

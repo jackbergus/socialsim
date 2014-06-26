@@ -67,7 +67,7 @@ class Agent {
 			  class_id{init["aid"]},
 			  aid{ptr->getId()}
 		{
-			Actions ac{ptr,this};
+			Actions ac{ptr,this}; //To state that here, you have to create the object first
 			perform = ac;
 		}
 		
@@ -76,7 +76,7 @@ class Agent {
 		int getAgentClassId();
 		
 		// Returns true if it sent the broadcast message;
-		bool percept();
-		bool reason();
+		bool percept(double time);
+		bool reason(double time);
 
 };

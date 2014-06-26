@@ -18,6 +18,7 @@
  * along with socialsim. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "graph/Vertex.h"
 #include "graph/Edge.h"
 #include "graph/Graph.h"
 #include "agent/Message.h"
@@ -25,7 +26,6 @@
 
 Edge::Edge(EProp* prop, edge_descriptor desc,Graph* grap) {
 	vp = prop;
-	vp->self = this;
 	vd = desc;
 	g = grap;
 }
@@ -34,20 +34,23 @@ edge_descriptor Edge::get_gboost_edge() {
 	return vd;
 }
 
-/*
-void Edge::setName(std::string new_name) {
-	if ((!vp)||(!g)) return;
-	
-	g->setName(new_name,this);
+Vertex* Edge::getSource() {
+	if ((!vp)||(!g)) {
+		std::cerr << "ERROR: no graph" <<std::endl;
+		return nullptr;
+	}
+	graph_t gr = g->get_gboost_graph();
+	return (gr)[(vd.m_source)].self;
 }
 
-std::string Edge::getName() {
-	if ((!vp)||(!g)) { std::string e{}; return e; }
-	
+Vertex* Edge::getTarget() {
+	if ((!vp)||(!g)) {
+		std::cerr << "ERROR: no graph" <<std::endl;
+		return nullptr;
+	}
 	graph_t gr = g->get_gboost_graph();
-	return (gr)[(vd)].name;
+	return (gr)[(vd.m_target)].self;
 }
-*/
 
 void Edge::remove() {
 	if ((!vp)||(!g)) {

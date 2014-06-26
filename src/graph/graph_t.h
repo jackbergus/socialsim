@@ -35,8 +35,11 @@
 
 class Graph;
 
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,VProp, EProp> graph_t;
+typedef boost::adjacency_list<boost::listS, boost::listS, boost::undirectedS, VProp, EProp> graph_t;
 typedef boost::graph_traits<graph_t>::vertex_descriptor vertex_descriptor;
 typedef boost::graph_traits<graph_t>::edge_descriptor edge_descriptor;
 
-
+#define VERTEX_GET(vd,pname,graph) 			boost::get(&VProp::pname, graph, vd)
+#define VERTEX_SET(vd,pname,graph,val)		boost::put(&VProp::pname, graph, vd,val)
+#define EDGE_GET(ed,pname,graph) 			boost::get(&EProp::pname, graph, ed)
+#define EDGE_SET(ed,pname,graph,val) 		boost::put(&EProp::pname, graph, ed,val)

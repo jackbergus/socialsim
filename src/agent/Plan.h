@@ -40,7 +40,7 @@ public:
 	 * @arg msg:   the message that will change the agent's state
 	 * @return: indicates at which level continue the evaluation
 	 */
-    virtual int process(json::Object* state, Message msg) = 0;
+    virtual int process(json::Object* state, Message msg, double time) = 0;
     
     static double getOpinionType(json::Object* state, int type) {
     	return (*state)["opinion"][std::to_string(type)];
@@ -51,19 +51,45 @@ public:
     
     static double getSenderReputation(json::Object* state, Message msg) {
     	if (!msg.getAgentSender())
-    		return 1;
+    		return 0.5;
     	else
     		return (*state)[std::to_string(msg.getSender())];
+    }
+    static double getSourceReputation(json::Object* state, Message msg) {
+    	if (!msg.getAgentSource())
+    		return 0.5;
+    	else
+    		return (*state)[std::to_string(msg.getSource())];
     }
     static double getSenderReputation(json::Object* state, int sender) {
     	return (*state)[std::to_string(sender)];
     }
+    
+    static void setSenderReputation(json::Object* state, Message msg,double val) {
+    	if (!msg.getAgentSender()) return;
+    	(*state)[std::to_string(msg.getSender())] = val;
+    }
+    static void setSourceReputation(json::Object* state, Message msg,double val) {
+    	if (!msg.getAgentSender()) return;
+    	(*state)[std::to_string(msg.getSource())] = val;
+    }
+    static void setSenderReputation(json::Object* state, int sender, double val) {
+    	(*state)[std::to_string(sender)] = val;
+    }
+    
     
     static double getPlagiability(json::Object* state) {
     	return (*state)["plagiability"];
     }
     static void doSend(json::Object* state, int type) {
     	(*state)["perform_broadcast"]=true;
+    	(*state)["doshare"] = false;
+    	(*state)["type_send"] = type;
+    }
+    static void doShare(json::Object* state, int type, double value) {
+    	(*state)["perform_broadcast"]=true;
+    	(*state)["doshare"] = true;
+    	(*state)["shared"][std::to_string(type)] = value;
     	(*state)["type_send"] = type;
     }
     static void notSend(json::Object* state) {

@@ -8,6 +8,16 @@ import java.util.Map;
 import java.util.LinkedList;
 
 import javax.swing.JFrame;
+import java.awt.BorderLayout;
+import java.awt.Toolkit;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import org.graphstream.ui.swingViewer.View;
 
 import org.graphstream.algorithm.BetweennessCentrality;
 import org.graphstream.algorithm.BetweennessCentrality.Progress;
@@ -35,9 +45,6 @@ public class GraphView {
 		}
 		public K getFirst() { return first; }
 		public V getSecond() { return second; }
-		public boolean equals(Pair<K,V> p) {
-			return (first==p.getFirst() && second==p.getSecond());
-		}
 		
 	}
 	
@@ -45,7 +52,13 @@ public class GraphView {
 	Map<Pair<Integer,Integer>,Edge> edgeMap;
 	
 	public int  addNode(int id) {
+		System.out.println("Asking for " + id + "");
+		System.out.println(this.nodeMap.containsKey(id));
 		if (this.nodeMap.containsKey(id)) {
+			System.out.println("ERROR: Hashmap has size " + this.nodeMap.size() + " and its keys are: ");
+			for ( Integer key : this.nodeMap.keySet() ) {
+			    System.out.println( key );
+			}
 			return -1; // The node already exists
 		} else {
 			Node n = g.addNode(Integer.toString(id));
@@ -55,12 +68,12 @@ public class GraphView {
 		}
 	}
 
-	public void addEdge(int from, int to) {
+	public int addEdge(int from, int to) {
 		Node source = getNode(from);
 		Node destin = getNode(to);
 		if (source==null || destin==null) {
 			System.err.println("Error");
-			return;
+			return -1;
 		}
 		String sfrom = Integer.toString(from);
 		String sto   = Integer.toString(to);
@@ -68,6 +81,7 @@ public class GraphView {
 		Edge e = g.addEdge(edge,source.getIndex(),destin.getIndex());
 		edgeMap.put(new Pair<Integer,Integer>(from,to), e);
 		edgeMap.put(new Pair<Integer,Integer>(to,from), e);
+		return e.getIndex();
 	}
 	
 	private Node getNode(int id) {
@@ -77,15 +91,23 @@ public class GraphView {
 			return null;
 	}
 	
+	public int setNodeColor(int nodeid, double val) {
+		Node v = getNode(nodeid);
+		if (v!=null)  {
+			v.setAttribute("ui.color",val);
+			return 1;
+		}
+		return 0;
+	}
+	
 	private Edge getEdge(int from,int to) {
 		Node source = getNode(from);
 		Node destin = getNode(to);
 		if (source==null || destin==null) {
 			return null;
 		}
-		Pair<Integer,Integer> pii = new Pair<Integer,Integer>(from, to);
 		for (Pair<Integer, Integer> x:edgeMap.keySet())  {
-			if (x.equals(pii)) {
+			if (x.getFirst() == from && x.getSecond() == to) {
 				return edgeMap.get(x);
 			}
 		}
@@ -96,7 +118,8 @@ public class GraphView {
 
 	
 	
-	private static void stop(long time) {
+	public void stop(long time) {
+		if (time<=0) return;
 		try {
 			Thread.sleep(time);
 		} catch (InterruptedException e) {
@@ -117,12 +140,16 @@ public class GraphView {
 		getNode(dst).removeAttribute("ui.class");
 	}
 	
-	public void sendBroadcast_with_stop(int src, int[] dst,long time,String msg) {
+	public int sendBroadcast_with_stop(int src, int[] dst,long time,String msg) {
 		getNode(src).setAttribute("ui.class", "sent");
 		LinkedList<Edge> ls = new LinkedList<Edge>();
 		for (int x: dst) {
 			getNode(x).setAttribute("ui.class", "recv");
 			Edge i = getEdge(src, x);
+			if (i==null) {
+				System.out.printf("Error: unexistant edge (" + src + "," + x + ")");
+				return 0;
+			}
 			i.setAttribute("ui.class", "sent");
 			i.setAttribute("ui.label", msg);
 			ls.add(i);
@@ -136,6 +163,7 @@ public class GraphView {
 		for (int x: dst) {
 			getNode(x).removeAttribute("ui.class");
 		}
+		return 1;
 	}
 	
 	public void betweenness() {
@@ -206,7 +234,7 @@ public class GraphView {
 		//Stile di visualizzazione del grafo
 		String css =  " graph {fill-mode: dyn-plain; } node { "
 						+ "size:10px; text-background-mode: rounded-box;  text-alignment: at-right;"
-						+ "shape: box; fill-mode: dyn-plain; fill-color: green, red;"
+						+ "shape: box; fill-mode: dyn-plain; fill-color: red, green;"
 						+"} edge {  size: 1px; fill-color: #444; } edge.sent { fill-color: blue; } node.sent { fill-color:blue,blue; }";
 
 
@@ -224,14 +252,35 @@ public class GraphView {
 		if (jf == null) {
 			Viewer viewer = new Viewer(g, Viewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);
 			viewer.enableAutoLayout();
-			View view = viewer.addDefaultView(false);
+			final View view = viewer.addDefaultView(false);
+				
+			JPanel centralPanel = new JPanel(new BorderLayout());
+			centralPanel.add(view, BorderLayout.CENTER);
+		
+			JSlider slider = new JSlider(0, 10000);
+			slider.setValue(10);
+			slider.setMinorTickSpacing(1); // step / interavl
+    			slider.setSnapToTicks(true);
+			view.getCamera().setViewPercent((10000.0 - ((double)slider.getValue())) / 1000.0);
+			slider.addChangeListener(new ChangeListener() {
+				@Override public void stateChanged(ChangeEvent e) {
+					double value = ((JSlider) e.getSource()).getValue();
+					view.getCamera().setViewPercent((10000.0 - value) / 1000.0);
+				}
+			});
+			
+			JPanel southPanel= new JPanel(new BorderLayout());
+			southPanel.add(slider, BorderLayout.SOUTH);
+			
 			jf = new JFrame();
 			jf.setPreferredSize(new Dimension(800, 600));
 		    	jf.pack();
 		    	jf.setLocationRelativeTo(null);
 			jf.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 			jf.setResizable(true);
-			jf.add(view);
+			//jf.add(view);
+			jf.add(centralPanel, BorderLayout.CENTER);
+			jf.add(southPanel, BorderLayout.SOUTH);
 		}
 		jf.setTitle(title);
 		jf.setVisible(true);
@@ -243,7 +292,6 @@ public class GraphView {
 	}
 	
 	public void close() {
-		//XXX:jf.dispatchEvent(new WindowEvent(jf, WindowEvent.WINDOW_CLOSING));
 		jf.dispose();
 		jf = null;
 	}

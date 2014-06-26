@@ -34,7 +34,8 @@ private:
 	public:
 		Exp() :  distrib{}, lam{1} {};				//Inizializzazione necessaria per inserirlo in liste
 		Exp(int seed, double lambda) : e{seed}, lam{lambda} {};		//Inizializzazione con parametro
-		double next() { return -lam * log(this->getRand()); }; //Definizione della funzione calcolata
+		double next(Vertex* src, Vertex* dst) { return -(1/lam) * log(1-this->getRand()); }; //Definizione della funzione calcolata
+		double start(double none) { return 0; }
 };
 
 

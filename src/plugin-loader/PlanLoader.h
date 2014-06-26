@@ -49,7 +49,7 @@ public:
 	}
 	
 	std::shared_ptr<Plan> load(std::string file);
-
+	Plan* raw_load(std::string file);
 
 };
 

@@ -45,7 +45,9 @@ void CernOWFile::reopenWrite(std::string name, CernHeader hd) {
 	f = new TFile(name.c_str(),"UPDATE");
 	//filename = tmp;
 	f->WriteObject(hd.get(),"header");
+#ifdef DEBUG
 	std::cout << "Header size is " << hd.size() << std::endl;
+#endif
 	ncols = hd.size();
 	ins = 0;
 }
@@ -134,7 +136,9 @@ std::list<std::string> CernOWFile::getKeys() {
 }
 	
 CernOWFile  &operator<<(CernOWFile  &input, CernRecord obj ) { 
+#ifdef DEBUG
 	std::cout << obj.size() << " vs. " << input.ncols << std::endl;
+#endif
 	assert(obj.size() == input.ncols); // the object size has to be equal to the number of columns 
 	input.f->WriteObject(obj.get(),std::to_string(input.ins).c_str()); //The object name is the row number
 	input.ins++;

@@ -32,3 +32,5 @@ int Message::getSource() {return src->getId();} ;
 int Message::getType() {return t;};
 
 double Message::getOpinion() { return rel; };
+
+double Message::getTime() { return time; };

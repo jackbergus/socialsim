@@ -22,6 +22,7 @@
 
 
 #pragma once
+#include "utils/data_structure.h"
 
 static inline  std::string get_file_contents(const char *filename) {
   std::ifstream in(filename, std::ios::in | std::ios::binary);

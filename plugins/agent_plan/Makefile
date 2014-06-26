@@ -1,9 +1,11 @@
 CPP_FILES := $(wildcard *.cpp)
 OBJ_FILES := $(CPP_FILES:.cpp=.plugin)
-CC_FLAGS := -g -std=c++11 -shared -fPIC -Wl,--export-dynamic -I../../src -I../../ext-libs
+CC_FLAGS := -g -std=c++11 -shared -fPIC -flto -Wl,--export-dynamic -I../../src -I../../ext-libs  -L/usr/local/lib/ -Wl,-R/usr/local/lib/ 
 
 %.plugin:	%.cpp
-	g++ $(CC_FLAGS) -o $@ $<
+	@echo "    CC $<"
+	@g++ $(CC_FLAGS) -o $@ $<
+
    
 all:	$(OBJ_FILES)
 	

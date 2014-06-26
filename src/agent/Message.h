@@ -33,26 +33,36 @@ class Message {
 		Agent* src;
 		int t;
 		double rel;
+		double time;
 		
 	public:
-		Message(Agent* sender, Agent* source, int type, double reliability) : send{sender}, src{source}, t{type}, rel{reliability} { 
+		Message(Agent* sender, Agent* source, int type, double reliability,double send_time) : send{sender}, src{source}, t{type}, rel{reliability}, time{send_time} { 
+#ifdef DEBUG
 			if (!sender) 
 				std::cout << "There is no sender!" << std::endl;
 			if (!source) 
-				std::cout << "There is no source!" << std::endl; };
-		Message(Agent* sender, int type, double reliability) : send{sender}, src{sender}, t{type}, rel{reliability} {
+				std::cout << "There is no source!" << std::endl; 
+#endif
+		};
+		Message(Agent* sender, int type, double reliability,double send_time) : send{sender}, src{sender}, t{type}, rel{reliability}, time{send_time} {
+#ifdef DEBUG
 		if (!sender) 
-				std::cout << "There is no sender!" << std::endl;};
+				std::cout << "There is no sender!" << std::endl;
+#endif
+		};
 		Message() : src{nullptr}, send{nullptr}, t{0}, rel{0} {};
 		Message(const Message& cp) {
 			send = cp.send;
 			src = cp.src;
 			t = cp.t;
 			rel = cp.rel;
+			time = cp.time;
+#ifdef DEBUG
 			if (!send) 
 				std::cout << "There is no sender!" << std::endl;
 			if (!src) 
 				std::cout << "There is no source!" << std::endl;
+#endif
 		}
 
 		int getSender();
@@ -61,4 +71,5 @@ class Message {
 		int getSource();
 		int getType();
 		double getOpinion();
+		double getTime();
 };

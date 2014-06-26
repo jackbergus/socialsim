@@ -19,6 +19,7 @@
  */
 
 #include "JVM.h"
+#include <iostream>
 
 JavaVM* JVM::jvm = nullptr;
 
@@ -26,5 +27,23 @@ JavaVM* JVM::getInstance() {
 	if (!jvm) {
 		initJVM();
 	}
+	JNIEnv *lenv;
+		
+	int getEnvStat = jvm->GetEnv((void **)&lenv, JNI_VERSION_1_6);
+	if (getEnvStat == JNI_EDETACHED) {
+		std::cout << "GetEnv: not attached" << std::endl;
+		if (jvm->AttachCurrentThread((void **) &lenv, NULL) != 0) {
+		    std::cout << "Failed to attach" << std::endl;
+		}
+	} else if (getEnvStat == JNI_OK) {
+		//
+	} else if (getEnvStat == JNI_EVERSION) {
+		std::cout << "GetEnv: version not supported" << std::endl;
+	}
+	
 	return jvm;
+}
+
+void JVM::detach() {
+	jvm->DetachCurrentThread();
 }

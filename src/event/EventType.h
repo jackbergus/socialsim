@@ -55,6 +55,7 @@ static inline bool operator<(EventEnumType lhs, EventEnumType rhs)
 };
 
 #define CASE(X) if (s == #X ) return EventEnumType::X
+#define ESAC(X) if (s == EventEnumType::X ) return #X
 
 inline EventEnumType String_to_EventEnumType(std::string s) {
 		CASE(CREATE_NODE);
@@ -66,3 +67,12 @@ inline EventEnumType String_to_EventEnumType(std::string s) {
 	else return EventEnumType::NO_EVENT;
 }
 
+inline std::string EventEnumType_to_String(EventEnumType s) {
+		ESAC(CREATE_NODE);
+	else 	ESAC(DELETE_NODE);
+	else 	ESAC(CREATE_ARCH);
+	else 	ESAC(SLEEP_NODE);
+	else 	ESAC(MESSAGE_SENT);
+	else    ESAC(NO_MORE_EVENTS);
+	else return "NO_EVENT";
+}

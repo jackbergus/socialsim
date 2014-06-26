@@ -45,18 +45,18 @@
 
 struct WholeMentalPlan {
 
-	typedef std::map<int,std::shared_ptr<Plan>>::iterator Iterator;
+	typedef std::map<int,std::unique_ptr<Plan>>::iterator Iterator;
 
-	std::map<int,std::shared_ptr<Plan>> plan_map;
+	std::map<int,std::unique_ptr<Plan>> plan_map;
 	
-	int 					current_pos;
-	std::shared_ptr<Plan>   current_plan;
-	Iterator 				current_ptr;
+	int 	 current_pos;
+	Plan*    current_plan;
+	Iterator current_ptr;
 	
-	void init_plans(json::Object o);
-	std::shared_ptr<Plan> set_first_plan();
-	int forward_to(int pos);
-	int backward_to(int pos);
+	void 	 init_plans(json::Object o);
+	Plan* 	 set_first_plan();
+	int 	 forward_to(int pos);
+	int 	 backward_to(int pos);
 
 	
 	public:
@@ -74,6 +74,6 @@ struct WholeMentalPlan {
 		* @param state: the agent state
 		* @param msg:   the message that starts the reasoning process
 		*/
-		int reason(json::Object* state, Message msg);
+		int reason(json::Object* state, Message msg, double time);
 };
 

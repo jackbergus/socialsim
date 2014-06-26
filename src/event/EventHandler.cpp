@@ -63,7 +63,11 @@ EventHandler::EventHandler(std::string file, int seed) {
 			std::shared_ptr<DistrCreator> build = dl->load(file);
 			std::shared_ptr<Distribution> distr{build->creator(obj)};
 			newEventGen(String_to_EventEnumType(it.first),distr);
-		} else {  std::cout << "End" << std::endl; }
+		} else {  
+#ifdef DEBUG
+			std::cout << "End" << std::endl;
+#endif
+		}
 	}
 };
 
@@ -77,35 +81,11 @@ std::shared_ptr<Event> EventHandler::next(EventEnumType t,Vertex* src, Vertex* d
 	return distr->next(src,dst); 
 }
 
-/*
-
-#include <iostream>
-#include <memory>
-#include "Exp.h"
-#include "EventHandler.h"
-
-int main(void) {
-	EventHandler ea{};
-	std::shared_ptr<Distribution> e1{new Exp(1)};
-	std::shared_ptr<Distribution> e2{new Exp(1)};
-	ea.newEventGen(EventEnumType::CREATE_NODE,e1);
-	ea.newEventGen(EventEnumType::DELETE_NODE,e2);
-	int i;
-	for (i=0; i<5; i++) {
-		std::cout << ea.next(EventEnumType::CREATE_NODE)->getTime() << std::endl;
-	}
-	for (i=0; i<5; i++) {
-		std::cout << ea.next(EventEnumType::DELETE_NODE)->getTime() << std::endl;
-	}
+double EventHandler::start(double var) {
+	std::map<EventEnumType,std::shared_ptr<EventGenerator>>::iterator it = m_map.find(EventEnumType::NO_MORE_EVENTS);
+	if (it == m_map.end()) 
+		return 0;
+	else
+		return it->second->start(var);
 }
 
-USAGE:
-
-g++ -std=c++11 -c Exp.cpp
-g++ -std=c++11 -c Event.cpp
-g++ -std=c++11 -c EventGenerator.cpp
-g++ -std=c++11 -c EventHandler.cpp
-g++ -std=c++11 -c main.cpp
-g++ -std=c++11 -o test Exp.o Event.o EventGenerator.o EventHandler.o main.o
-
-*/

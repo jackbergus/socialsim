@@ -21,6 +21,7 @@
 #pragma once
 #include <json/json.h>
 #include <string>
+#include <memory>
 
 class Edge;
 
@@ -30,8 +31,7 @@ class Edge;
  */
 typedef struct epr_
 { 
-	json::Object o;
 	int id;
-	Edge* self;
+	std::shared_ptr<Edge> self; //Problem: structs don't allow unique_ptr
 	
 } EProp;

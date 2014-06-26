@@ -31,3 +31,7 @@ PlanLoader* PlanLoader::ptr = nullptr;
 std::shared_ptr<Plan> PlanLoader::load(std::string file) {
 	return l.load(pa->getPlan(file));
 }
+
+Plan* PlanLoader::raw_load(std::string file) {
+	return l.raw_load(pa->getPlan(file));
+}

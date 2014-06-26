@@ -36,6 +36,7 @@ private:
 public:
 	EventGenerator(EventEnumType event, std::shared_ptr<Distribution> gen) : et{event}, d{gen} {};
 	std::shared_ptr<Event> next(Vertex *source, Vertex *dest);
+	double start(double param);
 
 };
 

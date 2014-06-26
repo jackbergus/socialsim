@@ -35,6 +35,8 @@ class Edge {
 		Edge(EProp* prop, edge_descriptor desc,Graph* grap);
 		//void setName(std::string new_name);
 		//std::string getName();
+		Vertex* getSource();
+		Vertex* getTarget();
 		edge_descriptor get_gboost_edge();
 		void remove();
 };

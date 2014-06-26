@@ -25,17 +25,21 @@
 #include <string>
 #include <random>
 #include <json/json.h>
+#include "graph/Graph.h"
+#include "graph/Vertex.h"
 
-#define DISTRCREATOR(under) 								\
-class under##Creator : public DistrCreator { 				\
-public:														\
-	under##Creator() {};									\
-	under* creator() { return new under(); };				\
+#define DISTRCREATOR(under) 					\
+class under##Creator : public DistrCreator { 			\
+public:								\
+	under##Creator() {};					\
+	under* creator() { return new under(); };		\
 	under* creator(double lam) { return new under(lam); };	\
 }
 
 struct Distribution {
-    virtual double next() = 0;
+	virtual double next(Vertex* src,Vertex* dst) = 0; // Element to override
+	double next() {return(next(nullptr,nullptr));};   
+	virtual double start(double param) = 0;	//No more overrides in C++
 };
 
 struct DistrCreator {

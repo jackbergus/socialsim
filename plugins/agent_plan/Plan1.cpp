@@ -30,16 +30,37 @@
 #include <iostream>
 #include <memory>
 
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/uniform_int.hpp>
+#include <boost/random/variate_generator.hpp>
+
+
+
+
 class Plan1 : public Plan {
+		
+		
+
+
 		
 	public:
 		Plan1() {}; //Costruttore base
 		std::string getName() { return "Plan1"; } //Nome del piano
 
 	
-		int process(json::Object* state, Message msg) { //Nome di *ogni* azione
+		//int process(json::Object* state, Message msg) <<--- XXX questa era la versione vecchia
+		int process(json::Object* state, Message msg,double NormalDistributionValue) { //Nome di *ogni* azione
 			std::cout << "In Plan1" << std::endl; 
+			std::cout << "horror" << NormalDistributionValue << std::endl;
 			
+			//Se nessuno ha inviato il messaggio, ma è quello di "inizio computazione"
+			if (msg.getAgentSender() == nullptr) {
+				std::cout << "NULL" <<std::endl;
+				//Semplicemente inoltro il mio stato
+				doSend(state,0);
+				//Esco dal ragionamento
+				return 50;
+			}
 			
 			//Ottiene l'opinione su di un determinato tipo di argomento, sul tipo del messaggio
 			double opinion = getOpinionType(state,msg.getType());
@@ -48,12 +69,29 @@ class Plan1 : public Plan {
 			//Ottengo il valore della plagiabilità
 			double plagiability = getPlagiability(state);
 			
+			// Introduco l'errore per la valutazione
+			std::cout << "valerror=" << NormalDistributionValue << std::endl; // Già corretto prima
+			
+			
 			//Valutazione
 			double valutation;
 			double reputation = getSenderReputation(state,msg);
-			valutation= sqrt( 0.5*(1 - abs(op_msg-opinion) + reputation) );
+			double rad=0;
 			
+			std::cout << "RADICANDO: " << 0.5 << "*(1-" << abs(op_msg-opinion) << "+"<< reputation <<") +" << NormalDistributionValue << std::endl;
+			
+			rad=0.5*(1 - abs(op_msg-opinion) + reputation) + NormalDistributionValue ;
+			if(rad>=1.) rad=1.;
+			if(rad<=0) rad=0;
+			
+			valutation= sqrt( rad );
+			
+			std::cout << "VALUTATION : " <<  valutation << std::endl;
+
 			//modifica dell'opinione nello stato interno
+			
+			std::cout << "OPINION +=:(( " <<  op_msg << "-" << opinion << ")*" << plagiability << "*" << "*" << valutation << std::endl;
+			
 			opinion += ((op_msg - opinion)* plagiability *valutation);
 			std::cout << "New Opinion: " << opinion << std::endl;
 			std::cout << "Reputation: " << reputation << std::endl;

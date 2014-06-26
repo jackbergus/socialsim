@@ -66,4 +66,5 @@ private:
 	
 public:
 	static JavaVM* getInstance();
+	static void detach();
 };
