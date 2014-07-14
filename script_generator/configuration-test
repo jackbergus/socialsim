@@ -1,0 +1,14 @@
+{
+	"seed":3,
+	"vertexpos":12,
+	"EventUpdate":0,
+	"Title":"Modello Pandi",
+	"stopAtEvent":70,
+	"conf":{
+		"event":"Ising.json",
+		"EventMachine":"Ising.plugin",
+		"graph":"lattice_5x6.xml",
+		"debug":1
+	}
+
+}
